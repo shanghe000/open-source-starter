@@ -13,7 +13,7 @@ python3 scripts/new_project.py my-project --description "一句话介绍项目" 
 ```
 
 需要 Python 3.10+、Git 和已登录的 GitHub CLI。创建脚本默认使用私有可见性；以上示例明确选择公开。
-随后把本 README 改成你的项目介绍，补上安装步骤、最小示例、功能范围、截图与限制。
+脚本会生成属于新项目的 README，并保留维护说明与路线图入口。随后补齐安装步骤、最小示例、功能范围、截图与限制。
 
 ## 已包含
 
@@ -63,6 +63,6 @@ Actions → **Draft release** → **Run workflow** → 输入 `v0.1.0`。
 
 ## 贡献与许可
 
-[贡献指南](CONTRIBUTING.md) · [安全政策](SECURITY.md) · [MIT License](LICENSE)
+[贡献指南](CONTRIBUTING.md) · [行为规范](CODE_OF_CONDUCT.md) · [安全政策](SECURITY.md) · [MIT License](LICENSE)
 
 保留模板原有许可声明；为新增代码补充适用的版权与许可。
