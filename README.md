@@ -11,10 +11,10 @@
 点击仓库顶部 **Use this template**，或在克隆本模板后运行：
 
 ```sh
-python3 scripts/new_project.py my-project --description "一句话介绍项目" --visibility public
+python3 scripts/new_project.py my-project --description "一句话介绍项目" --visibility private
 ```
 
-需要 Python 3.10+、Git 和已登录的 GitHub CLI。创建脚本默认使用私有可见性；以上示例明确选择公开。
+需要 Python 3.10+、Git 和已登录的 GitHub CLI。创建脚本只创建私有仓库，初始文档需要完成后再进入发布流程。
 脚本会生成属于新项目的 README，并保留维护说明与路线图入口。随后补齐安装步骤、最小示例、功能范围、截图与限制。
 
 ## 已包含
@@ -32,6 +32,7 @@ python3 scripts/new_project.py my-project --description "一句话介绍项目" 
 
 ```sh
 python3 scripts/check_repository.py
+python3 scripts/check_publication.py
 ```
 
 这是仓库卫生检查，不能代替业务测试、完整密钥扫描或安全审计。
@@ -52,6 +53,8 @@ python3 scripts/configure_repository.py
 GitHub 不会从模板复制规则与仓库设置，因此每个新项目需运行一次。
 
 ## 发布
+
+先完成全历史凭据扫描、第三方许可核对及项目测试，再通过 `Publication readiness`。初始 README 的写作提示会阻止发布。
 
 Actions → **Draft release** → **Run workflow** → 输入 `v0.1.0`。
 成功后到 Releases 检查草稿，再手动发布。流程对默认分支运行时的确切提交打标签，不覆盖已有版本。

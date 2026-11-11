@@ -25,9 +25,13 @@ def main():
     # Do not install a required check until it has actually run successfully.
     if not repo['isPrivate']:
         branch = repo['defaultBranchRef']['name']
-        runs = gh('run', 'list', '--repo', name, '--workflow', 'quality.yml', '--branch', branch, '--limit', '30', '--json', 'conclusion,event')
-        if not any(r['conclusion'] == 'success' and r['event'] in ['push', 'workflow_dispatch'] for r in runs):
+        head = gh('api', f'repos/{name}/commits/{branch}')['sha']
+        runs = gh('run', 'list', '--repo', name, '--workflow', 'quality.yml', '--branch', branch, '--limit', '30', '--json', 'conclusion,event,headSha')
+        if not any(r['headSha'] == head and r['conclusion'] == 'success' and r['event'] in ['push', 'workflow_dispatch'] for r in runs):
             raise SystemExit('Wait for a successful Repository quality run on the default branch, then rerun.')
+        publication = gh('run', 'list', '--repo', name, '--workflow', 'publication.yml', '--branch', branch, '--limit', '30', '--json', 'conclusion,headSha,event')
+        if not any(r['headSha'] == head and r['conclusion'] == 'success' and r['event'] in ['push', 'workflow_dispatch'] for r in publication):
+            raise SystemExit('Wait for Publication readiness to pass on the current default-branch commit.')
     gh('api', f'repos/{name}', '--method', 'PATCH', payload={
         'allow_squash_merge': True, 'allow_merge_commit': False,
         'allow_rebase_merge': False, 'delete_branch_on_merge': True,
@@ -49,7 +53,7 @@ def main():
                 'required_review_thread_resolution': True,
             }},
             {'type': 'required_status_checks', 'parameters': {
-                'required_status_checks': [{'context': 'Repository quality', 'integration_id': 15368}],
+                'required_status_checks': [{'context': name, 'integration_id': 15368} for name in ('Repository quality', 'Publication content', 'Credential scan')],
                 'strict_required_status_checks_policy': True,
             }},
         ],
