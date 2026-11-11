@@ -7,6 +7,8 @@ screenshots, examples and runtime behavior. It does not change visibility.
 from pathlib import Path
 import re
 import hashlib
+import base64
+import json
 import subprocess
 import sys
 
@@ -24,6 +26,37 @@ FOREIGN_RUNTIME = re.compile(
     r'rh-dev(?:-cn)?-int\.haimacloud\.com|sd-tk\.haimawan\.com|'
     r'analytics\.ahrefs\.com|hm\.baidu\.com|fxgate\.baidu\.com|'
     r'proj-xtrace-[\w-]+\.log\.aliyuncs\.com')
+
+
+def valid_digest(value, size):
+    try:
+        return len(base64.b64decode(value, validate=True)) == size
+    except (ValueError, TypeError):
+        return False
+
+
+def lock_errors(name, content):
+    errors = []
+    if Path(name).name == 'package-lock.json':
+        try:
+            lock = json.loads(content)
+            for package in lock.get('packages', {}).values():
+                for integrity in package.get('integrity', '').split():
+                    algorithm, _, value = integrity.partition('-')
+                    size = {'sha1': 20, 'sha256': 32, 'sha384': 48, 'sha512': 64}.get(algorithm)
+                    if size is None or not valid_digest(value, size):
+                        errors.append(f'{name}: malformed dependency integrity; verify against the authoritative package, never disable integrity checks')
+                        return errors
+        except (ValueError, AttributeError, TypeError):
+            errors.append(f'{name}: invalid dependency lock structure')
+    if Path(name).name == 'go.sum':
+        for number, line in enumerate(content.splitlines(), 1):
+            if not line.strip():
+                continue
+            fields = line.split()
+            if len(fields) != 3 or not fields[2].startswith('h1:') or not valid_digest(fields[2][3:], 32):
+                errors.append(f'{name}:{number}: malformed module checksum; verify with the module checksum service')
+    return errors
 
 
 def check(root):
@@ -53,6 +86,7 @@ def check(root):
         third_party = any(part in ('vendor', 'node_modules') for part in path.relative_to(root).parts)
         if third_party:
             continue  # Keep upstream documentation and attribution intact.
+        errors.extend(lock_errors(name, content))
         editorial_scope = path.suffix.lower() in ('.md', '.txt', '.json', '.yaml', '.yml', '.html')
         tooling = name.startswith(('scripts/', 'tests/', '.github/'))
         if editorial_scope and not tooling and EDITORIAL.search(content):
