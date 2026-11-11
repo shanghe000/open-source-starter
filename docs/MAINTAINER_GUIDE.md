@@ -27,3 +27,7 @@
 [Job Filter](https://github.com/shanghe000/job_filter) 展示了合成样例、真实测试、桌面打包及可审核发布的接入方式。
 
 [个人开源维护手册](https://github.com/shanghe000/.github/blob/main/docs/PLAYBOOK.md) 提供跨仓库习惯。
+
+## 项目视觉
+
+发布前更新项目名称与封面；[封面使用说明](BRANDING.md) 提供品牌素材入口与分享图设置方式。

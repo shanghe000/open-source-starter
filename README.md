@@ -1,5 +1,7 @@
 # Open Source Starter
 
+![Project cover — xuan jing](docs/images/cover.svg)
+
 一个轻量的开源项目起点：把文档、反馈、检查和发布流程准备好，再专注于项目本身。
 
 **状态：可复用的仓库模板。** 不绑定框架或语言；尚未包含业务应用与业务测试。
