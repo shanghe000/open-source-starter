@@ -3,6 +3,8 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+import json
+import base64
 
 spec = importlib.util.spec_from_file_location('publication', Path(__file__).resolve().parents[1] / 'scripts/check_publication.py')
 module = importlib.util.module_from_spec(spec)
@@ -58,6 +60,25 @@ class PublicationTests(unittest.TestCase):
         self.assertEqual(2, result.returncode)
         self.assertIn('invalid choice', result.stderr)
         self.assertFalse((self.root / 'demo').exists())
+
+    def test_brand_replacement_cannot_corrupt_lock_integrity_silently(self):
+        digest = base64.b64encode(bytes(range(64))).decode()
+        lock = {'packages': {'node_modules/demo': {'integrity': 'sha512-' + digest}}}
+        path = self.root / 'package-lock.json'
+        path.write_text(json.dumps(lock))
+        self.assertEqual([], self.check())
+        lock['packages']['node_modules/demo']['integrity'] += 'Studio'
+        path.write_text(json.dumps(lock))
+        self.assertEqual(1, len(self.check()))
+
+    def test_module_checksums_and_malformed_lock_files_are_reported(self):
+        digest = base64.b64encode(bytes(range(32))).decode()
+        path = self.root / 'go.sum'
+        path.write_text('example.org/module v1.0.0 h1:' + digest + '\n')
+        self.assertEqual([], self.check())
+        path.write_text('example.org/module v1.0.0 h1:corrupted\n')
+        (self.root / 'package-lock.json').write_text('{invalid')
+        self.assertEqual(2, len(self.check()))
 
 
 if __name__ == '__main__':
