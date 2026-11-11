@@ -51,7 +51,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('name', help='lowercase-kebab-case name')
     parser.add_argument('--description', required=True)
-    parser.add_argument('--visibility', choices=['public', 'private'], default='private')
+    parser.add_argument('--visibility', choices=['private'], default='private',
+                        help='New scaffolds remain private until publication review is complete.')
     args = parser.parse_args()
     if not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*', args.name):
         parser.error('Use lowercase letters, numbers and single hyphens.')

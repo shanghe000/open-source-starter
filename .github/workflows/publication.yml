@@ -1,0 +1,44 @@
+name: Publication readiness
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  publication:
+    name: Publication content
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: python3 scripts/check_publication.py
+  credentials:
+    name: Credential scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install verified scanner
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          curl --fail --location --retry 3 --output scanner.tar.gz https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          echo '551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  scanner.tar.gz' | sha256sum --check
+          mkdir scanner
+          tar -xzf scanner.tar.gz -C scanner gitleaks
+          echo "$RUNNER_TEMP/scanner" >> "$GITHUB_PATH"
+      - name: Scan complete fetched history
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '[extend]\nuseDefault = true\n' > "$RUNNER_TEMP/credential-scan.toml"
+          gitleaks git . --config "$RUNNER_TEMP/credential-scan.toml" --log-opts='--all --full-history' --redact=100 --ignore-gitleaks-allow --gitleaks-ignore-path "$RUNNER_TEMP/no-ignores" --max-archive-depth 3
